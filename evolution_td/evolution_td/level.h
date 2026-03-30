@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <cmath>
 
 class Level {
 private:
@@ -51,5 +52,37 @@ public:
 		}
 
 		return background_mask->getPixel({ static_cast<unsigned int>(virtualX), static_cast<unsigned int>(virtualY) }) == sf::Color::White;
+	}
+
+	bool canPlaceTower(sf::Vector2i mousePos, sf::Vector2u windowSize, int radius) const {
+		float scale = static_cast<float>(windowSize.y) / 960.f;
+
+		float backgroundWidth = 540.f * scale;
+
+		float offsetX = (static_cast<float>(windowSize.x) - backgroundWidth) / 2.f;
+
+		int centerX = static_cast<int>((mousePos.x - offsetX) / scale);
+		int centerY = static_cast<int>(mousePos.y / scale);
+
+		for (int dy = -radius; dy <= radius; ++dy) {
+			for (int dx = -radius; dx <= radius; ++dx) {
+				if (dx * dx + dy * dy > radius * radius) {
+					int virtualX = centerX + dx;
+					int virtualY = centerY + dy;
+
+					if (virtualX < 0 || virtualX >= 540 || virtualY < 0 || virtualY >= 960) {
+						return false;
+					}
+
+					sf::Color color = background_mask->getPixel({static_cast<unsigned int>(virtualX), static_cast<unsigned int>(virtualY)});
+
+					if (color != sf::Color::White) {
+						return false;
+					}
+				}
+			}
+		}
+
+		return true;
 	}
 };

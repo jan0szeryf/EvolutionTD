@@ -63,10 +63,15 @@ private:
 				if (mousePressed->button == sf::Mouse::Button::Left && gameState == GameState::PLAYING) {
 					if (currentLevel->canPlaceTower(mousePressed->position, window.getSize())) {
 						std::clog << "Can place tower at " << mousePressed->position.x << ", " << mousePressed->position.y << "\n";
-						// Here you would add logic to actually place the tower in the game world
 					}
 					else {
 						std::clog << "Cannot place tower at " << mousePressed->position.x << ", " << mousePressed->position.y << "\n";
+					}
+					if (currentLevel->canPlaceTower(mousePressed->position, window.getSize(), 3)) {
+						std::clog << "Can place tower with radius 3 at " << mousePressed->position.x << ", " << mousePressed->position.y << "\n";
+					}
+					else {
+						std::clog << "Cannot place tower with radius 3 at " << mousePressed->position.x << ", " << mousePressed->position.y << "\n";
 					}
 				}
 			}
