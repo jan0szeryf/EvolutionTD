@@ -9,6 +9,7 @@
 class AssetManager {
 private:
 	std::unordered_map<std::string, sf::Texture> textures;
+	std::unordered_map<std::string, sf::Image> masks;
 
 public:
 	AssetManager() = default;
@@ -25,8 +26,14 @@ public:
 				if (texture.loadFromFile(entry.path().string())) {
 					texture.setSmooth(true);
 					std::string name = entry.path().stem().string();
-					textures[name] = std::move(texture);
-					std::clog << "Loaded texture: " << name << std::endl;
+					if(!(name.find("_mask") != std::string::npos)) {
+						textures[name] = std::move(texture);
+						std::clog << "Loaded texture: " << name << std::endl;
+					}
+					else {
+						masks[name] = std::move(texture.copyToImage());
+						std::clog << "Loaded image: " << name << std::endl;
+					}
 				}
 			}
 		}
@@ -34,5 +41,9 @@ public:
 
 	const sf::Texture& getTexture(const std::string& name) const {
 		return textures.at(name);
-	};
+	}
+
+	const sf::Image& getMask(const std::string& name) const {
+		return masks.at(name);
+	}
 };

@@ -146,7 +146,8 @@
     <ClInclude Include="Entity.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="gamestate.h" />
-    <ClInclude Include="leveldata.h" />
+    <ClInclude Include="level.h" />
+    <ClInclude Include="main_menu.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
