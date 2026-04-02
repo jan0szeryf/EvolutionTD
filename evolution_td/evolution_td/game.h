@@ -10,11 +10,15 @@ private:
 	std::unique_ptr<MainMenu> mainMenu;
 	GameState gameState;
 
+	std::unique_ptr<Tower> pendingTower;
+
 public:
 	Game() : window(sf::VideoMode({ 540, 960 }), "EvolutionTD"), gameState(GameState::MAIN_MENU) {
 		assetManager.loadTextures("./assets/textures");
 		mainMenu = std::make_unique<MainMenu>(assetManager);
 		mainMenu->updateLayout(window.getSize());
+
+		pendingTower = std::make_unique<Tower>(Tower({ 0, 0 }, 5, 120.f, 1, 40.f, 10, assetManager.getTexture("thrower_stance"), assetManager.getTexture("thrower_projectile")));
 	}
 
 	void changeLevel(int id, const std::string& name, const std::string& texture) {
@@ -61,17 +65,23 @@ private:
 
 			if (auto mousePressed = event->getIf<sf::Event::MouseButtonPressed>()) {
 				if (mousePressed->button == sf::Mouse::Button::Left && gameState == GameState::PLAYING) {
-					if (currentLevel->canPlaceTower(mousePressed->position, window.getSize())) {
-						std::clog << "Can place tower at " << mousePressed->position.x << ", " << mousePressed->position.y << "\n";
+					float towerRadius = 32.f;
+					if (currentLevel->canPlaceTower(mousePressed->position, window.getSize(), towerRadius)) {
+						pendingTower->setColor(sf::Color(255, 255, 255, 255));
+						currentLevel->addTower(*pendingTower);
 					}
-					else {
-						std::clog << "Cannot place tower at " << mousePressed->position.x << ", " << mousePressed->position.y << "\n";
-					}
-					if (currentLevel->canPlaceTower(mousePressed->position, window.getSize(), 3)) {
-						std::clog << "Can place tower with radius 3 at " << mousePressed->position.x << ", " << mousePressed->position.y << "\n";
-					}
-					else {
-						std::clog << "Cannot place tower with radius 3 at " << mousePressed->position.x << ", " << mousePressed->position.y << "\n";
+				}
+			}
+
+			if (auto mouseMoved = event->getIf<sf::Event::MouseMoved>()) {
+				if (gameState == GameState::PLAYING && pendingTower) {
+					sf::Vector2f virtualPos = currentLevel->mapMouseToVirtual(mouseMoved->position, window.getSize());
+					pendingTower->setVirtualPos(virtualPos);
+
+					if (currentLevel->canPlaceTower(mouseMoved->position, window.getSize(), pendingTower->getRadius())) {
+						pendingTower->setColor(sf::Color(255, 255, 255, 200));
+					} else {
+						pendingTower->setColor(sf::Color(255, 100, 100, 200));
 					}
 				}
 			}
@@ -86,6 +96,14 @@ private:
 		}
 		else if (gameState == GameState::PLAYING) {
 			currentLevel->draw(window);
+			if (pendingTower)
+			{
+				float scale = static_cast<float>(window.getSize().y) / 960.f;
+				float offsetX = (static_cast<float>(window.getSize().x) - 540.f * scale) / 2.f;
+				pendingTower->drawRadius(window, scale, offsetX);
+				pendingTower->drawRange(window, scale, offsetX);
+				pendingTower->draw(window, scale, offsetX);
+			}
 		}
 
 		window.display();

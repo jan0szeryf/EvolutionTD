@@ -2,6 +2,8 @@
 #include "background.h"
 #include "gamestate.h"
 #include "asset_manager.h"
+#include "tower.h"
+#include "hashitbox.h"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -15,6 +17,7 @@ private:
 	std::string name;
 	std::unique_ptr<Background> background;
 	std::unique_ptr<sf::Image> background_mask;
+	std::vector<std::unique_ptr<Tower>> towers;
 
 public:
 	Level(int _id, const std::string& _name, const std::string& graphic_name, const AssetManager& assets) : id(_id), name(_name) {
@@ -33,8 +36,15 @@ public:
 		background->updateLayout(windowSize);
 	}
 
-	void draw(sf::RenderWindow& window) const {
-		background->draw(window); 
+	void draw(sf::RenderWindow& window) {
+		background->draw(window);
+
+		sf::Vector2u winSize = window.getSize();
+		float scale = static_cast<float>(winSize.y) / 960.f;
+		float offsetX = (static_cast<float>(winSize.x) - 540.f * scale) / 2.f;
+		for (const auto& tower : towers) {
+			const_cast<Tower*>(tower.get())->draw(window, scale, offsetX);
+		}
 	}
 
 	bool canPlaceTower(sf::Vector2i mousePos, sf::Vector2u windowSize) const {
@@ -66,7 +76,7 @@ public:
 
 		for (int dy = -radius; dy <= radius; ++dy) {
 			for (int dx = -radius; dx <= radius; ++dx) {
-				if (dx * dx + dy * dy > radius * radius) {
+				if (dx * dx + dy * dy <= radius * radius) {
 					int virtualX = centerX + dx;
 					int virtualY = centerY + dy;
 
@@ -83,6 +93,30 @@ public:
 			}
 		}
 
+		struct {
+			sf::Vector2f pos;
+			float r;
+			sf::Vector2f getVirtualPos() const { return pos; }
+			float getRadius() const { return r; }
+		} ghostHitbox = { { (float)centerX, (float)centerY }, (float)radius };
+
+		for (const auto& tower : towers) {
+			if (checkCollision(*tower, ghostHitbox)) {
+				return false;
+			}
+		}
+
 		return true;
+	}
+
+	void addTower(const Tower& tower) {
+		towers.push_back(std::make_unique<Tower>(tower));
+	}
+
+	sf::Vector2f mapMouseToVirtual(sf::Vector2i mousePos, sf::Vector2u windowSize) {
+		float scale = static_cast<float>(windowSize.y) / 960.f;
+		float offsetX = (static_cast<float>(windowSize.x) - 540.f * scale) / 2.f;
+
+		return { (mousePos.x - offsetX) / scale , mousePos.y / scale };
 	}
 };
