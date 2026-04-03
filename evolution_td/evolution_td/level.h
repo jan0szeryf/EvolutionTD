@@ -19,6 +19,9 @@ private:
 	std::unique_ptr<sf::Image> background_mask;
 	std::vector<std::unique_ptr<Tower>> towers;
 
+	float currentScale = 1.0f;
+	float currentOffsetX = 0.f;
+
 public:
 	Level(int _id, const std::string& _name, const std::string& graphic_name, const AssetManager& assets) : id(_id), name(_name) {
 		background = std::make_unique<Background>(assets.getTexture(graphic_name));
@@ -34,16 +37,16 @@ public:
 
 	void updateLayout(const sf::Vector2u& windowSize) {
 		background->updateLayout(windowSize);
+
+		currentScale = static_cast<float>(windowSize.y) / 960.f;
+		currentOffsetX = (static_cast<float>(windowSize.x) - 540.f * currentScale) / 2.f;
 	}
 
 	void draw(sf::RenderWindow& window) {
 		background->draw(window);
 
-		sf::Vector2u winSize = window.getSize();
-		float scale = static_cast<float>(winSize.y) / 960.f;
-		float offsetX = (static_cast<float>(winSize.x) - 540.f * scale) / 2.f;
 		for (const auto& tower : towers) {
-			const_cast<Tower*>(tower.get())->draw(window, scale, offsetX);
+			const_cast<Tower*>(tower.get())->draw(window, currentScale, currentOffsetX);
 		}
 	}
 
@@ -65,14 +68,10 @@ public:
 	}
 
 	bool canPlaceTower(sf::Vector2i mousePos, sf::Vector2u windowSize, int radius) const {
-		float scale = static_cast<float>(windowSize.y) / 960.f;
+		float backgroundWidth = 540.f * currentScale;
 
-		float backgroundWidth = 540.f * scale;
-
-		float offsetX = (static_cast<float>(windowSize.x) - backgroundWidth) / 2.f;
-
-		int centerX = static_cast<int>((mousePos.x - offsetX) / scale);
-		int centerY = static_cast<int>(mousePos.y / scale);
+		int centerX = static_cast<int>((mousePos.x - currentOffsetX) / currentScale);
+		int centerY = static_cast<int>(mousePos.y / currentScale);
 
 		for (int dy = -radius; dy <= radius; ++dy) {
 			for (int dx = -radius; dx <= radius; ++dx) {
@@ -114,9 +113,14 @@ public:
 	}
 
 	sf::Vector2f mapMouseToVirtual(sf::Vector2i mousePos, sf::Vector2u windowSize) {
-		float scale = static_cast<float>(windowSize.y) / 960.f;
-		float offsetX = (static_cast<float>(windowSize.x) - 540.f * scale) / 2.f;
+		return { (mousePos.x - currentOffsetX) / currentScale , mousePos.y / currentScale };
+	}
 
-		return { (mousePos.x - offsetX) / scale , mousePos.y / scale };
+	float getCurrentScale() const {
+		return currentScale;
+	}
+
+	float getCurrentOffsetX() const {
+		return currentOffsetX;
 	}
 };

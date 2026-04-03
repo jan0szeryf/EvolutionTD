@@ -10,6 +10,7 @@ class AssetManager {
 private:
 	std::unordered_map<std::string, sf::Texture> textures;
 	std::unordered_map<std::string, sf::Image> masks;
+	std::unordered_map<std::string, sf::Font> fonts;
 
 public:
 	AssetManager() = default;
@@ -21,6 +22,15 @@ public:
 		}
 
 		for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
+			if (entry.is_regular_file() && entry.path().extension() == ".ttf") {
+				sf::Font font;
+				if (font.openFromFile(entry.path().string())) {
+					std::string name = entry.path().stem().string();
+					fonts[name] = std::move(font);
+					std::clog << "Loaded font: " << name << std::endl;
+				}
+				continue;
+			}
 			if (entry.is_regular_file() && entry.path().extension() == ".png") {
 				sf::Texture texture;
 				if (texture.loadFromFile(entry.path().string())) {
@@ -45,5 +55,9 @@ public:
 
 	const sf::Image& getMask(const std::string& name) const {
 		return masks.at(name);
+	}
+
+	const sf::Font& getFont(const std::string& name) const {
+		return fonts.at(name);
 	}
 };

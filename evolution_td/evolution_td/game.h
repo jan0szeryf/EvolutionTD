@@ -1,6 +1,7 @@
 #pragma once
 #include "level.h"
 #include "main_menu.h"
+#include "ingamegui.h"
 
 class Game {
 private:
@@ -8,17 +9,19 @@ private:
 	AssetManager assetManager;
 	std::unique_ptr<Level> currentLevel;
 	std::unique_ptr<MainMenu> mainMenu;
+	std::unique_ptr<InGameGUI> gui;
 	GameState gameState;
 
 	std::unique_ptr<Tower> pendingTower;
 
 public:
 	Game() : window(sf::VideoMode({ 540, 960 }), "EvolutionTD"), gameState(GameState::MAIN_MENU) {
-		assetManager.loadTextures("./assets/textures");
+		assetManager.loadTextures("./assets");
+
 		mainMenu = std::make_unique<MainMenu>(assetManager);
 		mainMenu->updateLayout(window.getSize());
 
-		pendingTower = std::make_unique<Tower>(Tower({ 0, 0 }, 5, 120.f, 1, 40.f, 10, assetManager.getTexture("thrower_stance"), assetManager.getTexture("thrower_projectile")));
+		gui = std::make_unique<InGameGUI>(assetManager, assetManager.getFont("LilitaOne"));
 	}
 
 	void changeLevel(int id, const std::string& name, const std::string& texture) {
@@ -38,6 +41,12 @@ public:
 private:
 	void handleEvents() {
 		while (auto event = window.pollEvent()) {
+			sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+			if (gui->handleEvent(*event, mousePos)) {
+				continue;
+			}
+
 			if (event->is<sf::Event::Closed>()) {
 				window.close();
 			}
@@ -66,10 +75,11 @@ private:
 			if (auto mousePressed = event->getIf<sf::Event::MouseButtonPressed>()) {
 				if (mousePressed->button == sf::Mouse::Button::Left && gameState == GameState::PLAYING) {
 					float towerRadius = 32.f;
-					if (currentLevel->canPlaceTower(mousePressed->position, window.getSize(), towerRadius)) {
+					if (pendingTower && currentLevel->canPlaceTower(mousePressed->position, window.getSize(), static_cast<int>(towerRadius))) {
 						pendingTower->setColor(sf::Color(255, 255, 255, 255));
 						currentLevel->addTower(*pendingTower);
 					}
+					pendingTower.reset();
 				}
 			}
 
@@ -78,7 +88,7 @@ private:
 					sf::Vector2f virtualPos = currentLevel->mapMouseToVirtual(mouseMoved->position, window.getSize());
 					pendingTower->setVirtualPos(virtualPos);
 
-					if (currentLevel->canPlaceTower(mouseMoved->position, window.getSize(), pendingTower->getRadius())) {
+					if (currentLevel->canPlaceTower(mouseMoved->position, window.getSize(), static_cast<int>(pendingTower->getRadius()))) {
 						pendingTower->setColor(sf::Color(255, 255, 255, 200));
 					} else {
 						pendingTower->setColor(sf::Color(255, 100, 100, 200));
@@ -95,11 +105,15 @@ private:
 			mainMenu->draw(window);
 		}
 		else if (gameState == GameState::PLAYING) {
+			float scale = currentLevel->getCurrentScale();
+			float offsetX = currentLevel->getCurrentOffsetX();
+
 			currentLevel->draw(window);
+
+			gui->draw(window);
+
 			if (pendingTower)
 			{
-				float scale = static_cast<float>(window.getSize().y) / 960.f;
-				float offsetX = (static_cast<float>(window.getSize().x) - 540.f * scale) / 2.f;
 				pendingTower->drawRadius(window, scale, offsetX);
 				pendingTower->drawRange(window, scale, offsetX);
 				pendingTower->draw(window, scale, offsetX);
