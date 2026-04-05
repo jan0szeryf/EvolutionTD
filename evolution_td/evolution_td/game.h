@@ -23,6 +23,11 @@ public:
 
 		gui = std::make_unique<InGameGUI>(assetManager, assetManager.getFont("LilitaOne"));
 		gui->updateLayout(1.f, 1.f, window.getSize());
+		gui->addTowerButton(assetManager.getTexture("thrower_stance"), assetManager.getFont("LilitaOne"), "", [this]() {
+			sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+			this->pendingTower = std::make_unique<Tower>(static_cast<sf::Vector2f>(mousePos), 10, 120.f, 1.f, 40.f, 100, assetManager.getTexture("thrower_stance"), assetManager.getTexture("thrower_projectile"));
+			gui->toggleShop();
+			});
 	}
 
 	void changeLevel(int id, const std::string& name, const std::string& texture) {
@@ -56,6 +61,7 @@ private:
 					gui->updateLayout(currentLevel->getCurrentScale(), currentLevel->getCurrentOffsetX(), window.getSize());
 				}
 				if (keyPressed->scancode == sf::Keyboard::Scancode::Escape && gameState == GameState::PLAYING) {
+					currentLevel.reset();
 					gameState = GameState::MAIN_MENU;
 					gui->reset();
 					mainMenu->updateLayout(window.getSize());
@@ -71,6 +77,20 @@ private:
 				else if (gameState == GameState::PLAYING) {
 					currentLevel->updateLayout(resized->size);
 					gui->updateLayout(currentLevel->getCurrentScale(), currentLevel->getCurrentOffsetX(), resized->size);
+				}
+			}
+
+			if (auto mouseMoved = event->getIf<sf::Event::MouseMoved>()) {
+				if (gameState == GameState::PLAYING && pendingTower) {
+					sf::Vector2f virtualPos = currentLevel->mapMouseToVirtual(mouseMoved->position, window.getSize());
+					pendingTower->setVirtualPos(virtualPos);
+
+					if (currentLevel->canPlaceTower(mouseMoved->position, window.getSize(), static_cast<int>(pendingTower->getRadius()))) {
+						pendingTower->setColor(sf::Color(255, 255, 255, 200));
+					}
+					else {
+						pendingTower->setColor(sf::Color(255, 100, 100, 200));
+					}
 				}
 			}
 
@@ -90,19 +110,6 @@ private:
 					pendingTower.reset();
 				}
 			}
-
-			if (auto mouseMoved = event->getIf<sf::Event::MouseMoved>()) {
-				if (gameState == GameState::PLAYING && pendingTower) {
-					sf::Vector2f virtualPos = currentLevel->mapMouseToVirtual(mouseMoved->position, window.getSize());
-					pendingTower->setVirtualPos(virtualPos);
-
-					if (currentLevel->canPlaceTower(mouseMoved->position, window.getSize(), static_cast<int>(pendingTower->getRadius()))) {
-						pendingTower->setColor(sf::Color(255, 255, 255, 200));
-					} else {
-						pendingTower->setColor(sf::Color(255, 100, 100, 200));
-					}
-				}
-			}
 		}
 	}
 
@@ -118,7 +125,7 @@ private:
 
 			currentLevel->draw(window);
 
-			gui->draw(window, scale, offsetX);
+			gui->draw(window);
 
 			if (pendingTower)
 			{

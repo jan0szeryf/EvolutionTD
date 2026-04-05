@@ -41,7 +41,7 @@ public:
 		updateLayout(lastScale, lastOffsetX, lastWindowSize);
 	}
 
-	void draw(sf::RenderWindow& window, float scale, float offsetX) {
+	void draw(sf::RenderWindow& window) {
 		window.draw(statsText);
 
 		if (isShopOpen) {
@@ -82,6 +82,19 @@ public:
 
 		statsText.setCharacterSize(static_cast<unsigned int>(24.f * scale));
 		statsText.setPosition({ offsetX + (20.f * scale), 20.f * scale });
+
+		float towerButtonSize = 80.f * scale;
+		float startX = offsetX + (20.f * scale);
+		float startY = h - panelHeight + (20.f * scale);
+		float padding = 15.f * scale;
+
+		for (size_t i = 0; i < towerButtons.size(); ++i) {
+			float x = startX + i * (buttonSize + padding);
+			float y = startY;
+
+			towerButtons[i]->setPosition({ x, y });
+			towerButtons[i]->setSize({ towerButtonSize, towerButtonSize });
+		}
 	}
 
 	bool handleEvent(const sf::Event& event, sf::Vector2i mousePos) {
@@ -107,5 +120,14 @@ public:
 		}
 
 		return false;
+	}
+
+	void addTowerButton(const sf::Texture& texture, const sf::Font& font, std::string text, std::function<void()> callback) {
+		float buttonSize = 60.f * lastScale;
+		float x = shopPanel.getPosition().x + 20.f * lastScale;
+		float y = shopPanel.getPosition().y + 20.f * lastScale + towerButtons.size() * (buttonSize + 10.f * lastScale);
+		auto button = std::make_unique<Button>(texture, sf::Vector2f(x, y), font, text, callback);
+		button->setSize({ buttonSize, buttonSize });
+		towerButtons.push_back(std::move(button));
 	}
 };
