@@ -22,6 +22,7 @@ public:
 		mainMenu->updateLayout(window.getSize());
 
 		gui = std::make_unique<InGameGUI>(assetManager, assetManager.getFont("LilitaOne"));
+		gui->updateLayout(1.f, 1.f, window.getSize());
 	}
 
 	void changeLevel(int id, const std::string& name, const std::string& texture) {
@@ -43,12 +44,22 @@ private:
 		while (auto event = window.pollEvent()) {
 			sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 
-			if (gui->handleEvent(*event, mousePos)) {
-				continue;
-			}
-
 			if (event->is<sf::Event::Closed>()) {
 				window.close();
+			}
+
+			if (auto keyPressed = event->getIf<sf::Event::KeyPressed>()) {
+				if (keyPressed->scancode == sf::Keyboard::Scancode::Num1 && gameState == GameState::MAIN_MENU) {
+					changeLevel(1, "forest1", "forest1");
+					gameState = GameState::PLAYING;
+
+					gui->updateLayout(currentLevel->getCurrentScale(), currentLevel->getCurrentOffsetX(), window.getSize());
+				}
+				if (keyPressed->scancode == sf::Keyboard::Scancode::Escape && gameState == GameState::PLAYING) {
+					gameState = GameState::MAIN_MENU;
+					gui->reset();
+					mainMenu->updateLayout(window.getSize());
+				}
 			}
 
 			if (auto resized = event->getIf<sf::Event::Resized>()) {
@@ -59,16 +70,13 @@ private:
 				}
 				else if (gameState == GameState::PLAYING) {
 					currentLevel->updateLayout(resized->size);
+					gui->updateLayout(currentLevel->getCurrentScale(), currentLevel->getCurrentOffsetX(), resized->size);
 				}
 			}
 
-			if (auto keyPressed = event->getIf<sf::Event::KeyPressed>()) {
-				if (keyPressed->scancode == sf::Keyboard::Scancode::Num1 && gameState == GameState::MAIN_MENU) {
-					changeLevel(1, "forest1", "forest1");
-					gameState = GameState::PLAYING;
-				}
-				if (keyPressed->scancode == sf::Keyboard::Scancode::Escape && gameState == GameState::PLAYING) {
-					gameState = GameState::MAIN_MENU;
+			if (gameState == GameState::PLAYING) {
+				if (gui->handleEvent(*event, mousePos)) {
+					continue;
 				}
 			}
 
@@ -110,7 +118,7 @@ private:
 
 			currentLevel->draw(window);
 
-			gui->draw(window);
+			gui->draw(window, scale, offsetX);
 
 			if (pendingTower)
 			{
