@@ -4,6 +4,9 @@
 #include "asset_manager.h"
 #include "tower.h"
 #include "hashitbox.h"
+#include "wave_manager.h"
+#include "projectile.h"
+#include "player_stats.h"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -18,6 +21,10 @@ private:
 	std::unique_ptr<Background> background;
 	std::unique_ptr<sf::Image> background_mask;
 	std::vector<std::unique_ptr<Tower>> towers;
+	std::vector<std::unique_ptr<Enemy>> enemies;
+	std::vector<std::unique_ptr<Projectile>> projectiles;
+	std::unique_ptr<WaveManager> waveManager;
+	std::unique_ptr<PlayerStats> playerStats;
 
 	float currentScale = 1.0f;
 	float currentOffsetX = 0.f;
@@ -25,6 +32,7 @@ private:
 public:
 	Level(int _id, const std::string& _name, const std::string& graphic_name, const AssetManager& assets) : id(_id), name(_name) {
 		background = std::make_unique<Background>(assets.getTexture(graphic_name));
+		playerStats = std::make_unique<PlayerStats>();
 		try {
 			if (_name != "menu") {
 				background_mask = std::make_unique<sf::Image>(assets.getMask(graphic_name + "_mask"));
