@@ -4,6 +4,7 @@
 
 class Tower {
 private:
+	std::string name;
 	sf::Vector2f virtualPos;
 	int damage;
 	float range;
@@ -16,7 +17,7 @@ private:
 	float texScale = 1.f;
 
 public:
-	Tower(sf::Vector2f _virtualPos, int _damage, float _range, float _fireRate, float _radius, int _cost, const sf::Texture& texture, const sf::Texture& bulletTexture) : virtualPos(_virtualPos), damage(_damage), range(_range), fireRate(_fireRate), radius(_radius), cost(_cost), sprite(texture), bulletSprite(bulletTexture) {
+	Tower(const std::string& _name, sf::Vector2f _virtualPos, int _damage, float _range, float _fireRate, float _radius, int _cost, const sf::Texture& texture, const sf::Texture& bulletTexture) : name(_name), virtualPos(_virtualPos), damage(_damage), range(_range), fireRate(_fireRate), radius(_radius), cost(_cost), sprite(texture), bulletSprite(bulletTexture) {
 		sf::Vector2f texSize = sf::Vector2f(texture.getSize());
 		sprite.setOrigin(texSize / 2.f);
 
@@ -30,6 +31,10 @@ public:
 	
 	sf::Vector2f getVirtualPos() const {
 		return virtualPos;
+	}
+
+	std::string getName() const {
+		return name;
 	}
 
 	void draw(sf::RenderWindow& window, float scale, float offsetX) {

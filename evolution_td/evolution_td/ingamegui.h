@@ -33,6 +33,11 @@ public:
 
 	void toggleShop() {
 		isShopOpen = !isShopOpen;
+		if (isShopOpen) {
+			std::cout << "Shop opened\n";
+		} else {
+			std::cout << "Shop closed\n";
+		}
 		updateLayout(lastScale, lastOffsetX, lastWindowSize);
 	}
 
