@@ -34,7 +34,7 @@ public:
 		gui->updateLayout(1.f, 1.f, window.getSize());
 		gui->addTowerButton(assetManager.getTexture("thrower_stance"), assetManager.getFont("LilitaOne"), "", [this]() {
 			sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-			this->pendingTower = std::make_unique<Tower>(static_cast<sf::Vector2f>(mousePos), 10, 120.f, 1.f, 40.f, 100, assetManager.getTexture("thrower_stance"), assetManager.getTexture("thrower_projectile"));
+			this->pendingTower = std::make_unique<Tower>("thrower", static_cast<sf::Vector2f>(mousePos), 10, 120.f, 1.f, 40.f, 100, assetManager.getTexture("thrower_stance"), assetManager.getTexture("thrower_projectile"));
 			gui->toggleShop();
 			});
 	}
@@ -68,12 +68,14 @@ private:
 					gameState = GameState::PLAYING;
 
 					gui->updateLayout(currentLevel->getCurrentScale(), currentLevel->getCurrentOffsetX(), window.getSize());
+					std::cout << "State changed to PLAYING (forest1)\n";
 				}
 				if (keyPressed->scancode == sf::Keyboard::Scancode::Escape && gameState == GameState::PLAYING) {
 					currentLevel.reset();
 					gameState = GameState::MAIN_MENU;
 					gui->reset();
 					mainMenu->updateLayout(window.getSize());
+					std::cout << "State changed to MAIN MENU\n";
 				}
 			}
 
@@ -115,8 +117,16 @@ private:
 					if (pendingTower && currentLevel->canPlaceTower(mousePressed->position, window.getSize(), static_cast<int>(towerRadius))) {
 						pendingTower->setColor(sf::Color(255, 255, 255, 255));
 						currentLevel->addTower(*pendingTower);
+						std::cout << "Placed tower " << pendingTower->getName() <<"at virtual position: (" << pendingTower->getVirtualPos().x << ", " << pendingTower->getVirtualPos().y << ")\n";
+						pendingTower.reset();
 					}
+					if (pendingTower && !currentLevel->canPlaceTower(mousePressed->position, window.getSize(), static_cast<int>(towerRadius))) {
+						std::cout << "Unable to place tower at virtual position: (" << pendingTower->getVirtualPos().x << ", " << pendingTower->getVirtualPos().y << ")\n";
+					}
+				}
+				if (mousePressed->button == sf::Mouse::Button::Right && pendingTower) {
 					pendingTower.reset();
+					std::cout << "Cancelled tower placement\n";
 				}
 			}
 		}
