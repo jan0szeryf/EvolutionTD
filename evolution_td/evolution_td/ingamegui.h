@@ -13,16 +13,19 @@ private:
 	float lastOffsetX = 0.f;
 
 	std::unique_ptr<Button> shopButton;
+	std::unique_ptr<Button> pauseButton;
 	sf::Text statsText;
 
 	sf::RectangleShape shopPanel;
 	std::vector<std::unique_ptr<Button>> towerButtons;
 
 public:
-	InGameGUI(const AssetManager& assets, const sf::Font& font) : statsText(font) {
+	InGameGUI(const AssetManager& assets, const sf::Font& font, std::function<void()> onPauseCallback) : statsText(font) {
 		shopButton = std::make_unique<Button>(assets.getTexture("shop_icon"), sf::Vector2f(460.f, 880.f), font, "", [this]() {
 			this->toggleShop();
 		});
+		
+		pauseButton = std::make_unique<Button>(assets.getTexture("pause_icon"), sf::Vector2f(460.f, 20.f), font, "", onPauseCallback);
 
 		shopPanel.setFillColor(sf::Color(50, 50, 50, 200));
 
@@ -52,6 +55,7 @@ public:
 		}
 
 		shopButton->draw(window);
+		pauseButton->draw(window);
 	}
 
 	void updateLayout(float scale, float offsetX, const sf::Vector2u windowSize) {
@@ -70,15 +74,21 @@ public:
 
 		float buttonSize = 60.f * scale;
 		shopButton->setSize({ buttonSize, buttonSize });
+		pauseButton->setSize({ buttonSize, buttonSize });
 
-		float btnX = offsetX + (460.f * scale);
-		float btnY = h - (80.f * scale);
+		float shopBtnX = offsetX + (460.f * scale);
+		float shopBtnY = h - (80.f * scale);
 
 		if (isShopOpen) {
-			btnY -= (300.f * scale);
+			shopBtnY -= (300.f * scale);
 		}
 
-		shopButton->setPosition({ btnX, btnY });
+		shopButton->setPosition({ shopBtnX, shopBtnY });
+
+		float pauseBtnX = offsetX + (460.f * scale);
+		float pauseBtnY = 20.f * scale;
+
+		pauseButton->setPosition({ pauseBtnX, pauseBtnY });
 
 		statsText.setCharacterSize(static_cast<unsigned int>(24.f * scale));
 		statsText.setPosition({ offsetX + (20.f * scale), 20.f * scale });

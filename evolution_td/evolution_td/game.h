@@ -21,7 +21,16 @@ public:
 		mainMenu = std::make_unique<MainMenu>(assetManager);
 		mainMenu->updateLayout(window.getSize());
 
-		gui = std::make_unique<InGameGUI>(assetManager, assetManager.getFont("LilitaOne"));
+		gui = std::make_unique<InGameGUI>(assetManager, assetManager.getFont("LilitaOne"), [this]() {
+			if (this->gameState == GameState::PLAYING) {
+				//this->gameState = GameState::PAUSED;
+				std::cout << "Game paused\n";
+			}
+			else if (this->gameState == GameState::PAUSED) {
+				//this->gameState = GameState::PLAYING;
+				std::cout << "Game unpaused\n";
+			}
+			});
 		gui->updateLayout(1.f, 1.f, window.getSize());
 		gui->addTowerButton(assetManager.getTexture("thrower_stance"), assetManager.getFont("LilitaOne"), "", [this]() {
 			sf::Vector2i mousePos = sf::Mouse::getPosition(window);
