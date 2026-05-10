@@ -112,10 +112,20 @@ public:
 		}
 	}
 
-	bool handleEvent(const sf::Event& event, sf::Vector2i mousePos) {
+	bool handleEvent(const sf::Event& event, sf::Vector2i mousePos, bool isPaused) {
 		if (shopButton->isClicked(mousePos)) {
 			if (event.is<sf::Event::MouseButtonPressed>()) {
+				if (isPaused) {
+					return false;
+				}
 				shopButton->execute();
+				return true;
+			}
+		}
+
+		if (pauseButton->isClicked(mousePos)) {
+			if (event.is<sf::Event::MouseButtonPressed>()) {
+				pauseButton->execute();
 				return true;
 			}
 		}
@@ -125,6 +135,9 @@ public:
 				for (const auto& button : towerButtons) {
 					if (button->isClicked(mousePos)) {
 						if (event.is<sf::Event::MouseButtonPressed>()) {
+							if (isPaused) {
+								return false;
+							}
 							button->execute();
 							return true;
 						}

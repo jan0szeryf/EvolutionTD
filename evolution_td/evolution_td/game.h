@@ -21,14 +21,14 @@ public:
 		mainMenu = std::make_unique<MainMenu>(assetManager);
 		mainMenu->updateLayout(window.getSize());
 
-		gui = std::make_unique<InGameGUI>(assetManager, assetManager.getFont("LilitaOne"), [this]() {
+		gui = std::make_unique<InGameGUI>(assetManager, assetManager.getFont("LilitaOne"), [&]() {
 			if (this->gameState == GameState::PLAYING) {
-				//this->gameState = GameState::PAUSED;
-				std::cout << "Game paused\n";
+				this->gameState = GameState::PAUSED;
+				std::cout << "State changed to PAUSED\n";
 			}
 			else if (this->gameState == GameState::PAUSED) {
-				//this->gameState = GameState::PLAYING;
-				std::cout << "Game unpaused\n";
+				this->gameState = GameState::PLAYING;
+				std::cout << "State changed to PLAYING\n";
 			}
 			});
 		gui->updateLayout(1.f, 1.f, window.getSize());
@@ -105,8 +105,8 @@ private:
 				}
 			}
 
-			if (gameState == GameState::PLAYING) {
-				if (gui->handleEvent(*event, mousePos)) {
+			if (gameState == GameState::PLAYING || gameState == GameState::PAUSED) {
+				if (gui->handleEvent(*event, mousePos, gameState == GameState::PAUSED)) {
 					continue;
 				}
 			}
@@ -152,6 +152,13 @@ private:
 				pendingTower->drawRange(window, scale, offsetX);
 				pendingTower->draw(window, scale, offsetX);
 			}
+		}
+		else if (gameState == GameState::PAUSED) {
+			currentLevel->draw(window);
+			gui->draw(window);
+			sf::RectangleShape overlay({ static_cast<float>(window.getSize().x), static_cast<float>(window.getSize().y) });
+			overlay.setFillColor(sf::Color(0, 0, 0, 150));
+			window.draw(overlay);
 		}
 
 		window.display();
