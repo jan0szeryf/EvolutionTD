@@ -11,6 +11,7 @@ private:
 	std::unique_ptr<MainMenu> mainMenu;
 	std::unique_ptr<InGameGUI> gui;
 	GameState gameState;
+	sf::Clock clock;
 
 	std::unique_ptr<Tower> pendingTower;
 
@@ -34,7 +35,8 @@ public:
 		gui->updateLayout(1.f, 1.f, window.getSize());
 		gui->addTowerButton(assetManager.getTexture("thrower_stance"), assetManager.getFont("LilitaOne"), "", [this]() {
 			sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-			this->pendingTower = std::make_unique<Tower>("thrower", static_cast<sf::Vector2f>(mousePos), 10, 120.f, 1.f, 40.f, 100, assetManager.getTexture("thrower_stance"), assetManager.getTexture("thrower_projectile"));
+			sf::Vector2f virtualPos = currentLevel->mapMouseToVirtual(mousePos, window.getSize());
+			this->pendingTower = std::make_unique<Tower>("thrower", virtualPos, 10, 120.f, 1.f, 40.f, 100, assetManager.getTexture("thrower_stance"), assetManager.getTexture("thrower_projectile"));
 			gui->toggleShop();
 			});
 	}
@@ -76,6 +78,10 @@ private:
 					gui->reset();
 					mainMenu->updateLayout(window.getSize());
 					std::cout << "State changed to MAIN MENU\n";
+				}
+				if (keyPressed->scancode == sf::Keyboard::Scancode::Enter && gameState == GameState::PLAYING) {
+					currentLevel->nextWave();
+					std::cout << "Started wave " << currentLevel->getCurrentWave() << "\n";
 				}
 			}
 
@@ -165,6 +171,14 @@ private:
 	}
 
 	void update() {
-		// Game logic updates would go here
+		if(gameState == GameState::PLAYING) {
+			float deltaTime = clock.restart().asSeconds();
+			if(currentLevel) {
+				currentLevel->update(deltaTime);
+			}
+		}
+		else {
+			clock.restart();
+		}
 	}
 };

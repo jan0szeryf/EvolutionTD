@@ -36,7 +36,10 @@ public:
 		try {
 			if (_name != "menu") {
 				background_mask = std::make_unique<sf::Image>(assets.getMask(graphic_name + "_mask"));
-			}
+				std::cout << "Loaded background mask for " << graphic_name << "\n";
+
+				waveManager = std::make_unique<WaveManager>(id, assets);
+			} 
 		} catch (const std::out_of_range&) {
 			std::clog << "No graphic such as " << graphic_name << "_mask\n";
 			background_mask = nullptr;
@@ -50,11 +53,25 @@ public:
 		currentOffsetX = (static_cast<float>(windowSize.x) - 540.f * currentScale) / 2.f;
 	}
 
+	void update(float deltaTime) {
+		if (waveManager) {
+			waveManager->update(deltaTime, enemies);
+		}
+
+		for(const auto& enemy : enemies) {
+			enemy->move(deltaTime);
+		}
+	}
+
 	void draw(sf::RenderWindow& window) {
 		background->draw(window);
 
-		for (const auto& tower : towers) {
-			const_cast<Tower*>(tower.get())->draw(window, currentScale, currentOffsetX);
+		for (auto& tower : towers) {
+			tower->draw(window, currentScale, currentOffsetX);
+		}
+
+		for (auto& enemy : enemies) {
+			enemy->draw(window, currentScale, currentOffsetX);
 		}
 	}
 
@@ -120,6 +137,12 @@ public:
 		towers.push_back(std::make_unique<Tower>(tower));
 	}
 
+	void nextWave() {
+		if (waveManager) {
+			waveManager->nextWave();
+		}
+	}
+
 	sf::Vector2f mapMouseToVirtual(sf::Vector2i mousePos, sf::Vector2u windowSize) {
 		return { (mousePos.x - currentOffsetX) / currentScale , mousePos.y / currentScale };
 	}
@@ -130,5 +153,12 @@ public:
 
 	float getCurrentOffsetX() const {
 		return currentOffsetX;
+	}
+
+	int getCurrentWave() const {
+		if (waveManager) {
+			return waveManager->getCurrentWave();
+		}
+		return 0;
 	}
 };
