@@ -23,6 +23,7 @@ private:
 	std::vector<std::unique_ptr<Tower>> towers;
 	std::vector<std::unique_ptr<Enemy>> enemies;
 	std::vector<std::unique_ptr<Projectile>> projectiles;
+	std::vector<sf::Vector2f> pathPoints;
 	std::unique_ptr<WaveManager> waveManager;
 	std::unique_ptr<PlayerStats> playerStats;
 
@@ -39,10 +40,24 @@ public:
 				std::cout << "Loaded background mask for " << graphic_name << "\n";
 
 				waveManager = std::make_unique<WaveManager>(id, assets);
-			} 
+			}
 		} catch (const std::out_of_range&) {
 			std::clog << "No graphic such as " << graphic_name << "_mask\n";
 			background_mask = nullptr;
+		}
+		if (_name == "forest1") {
+			pathPoints.push_back({ 270.f, 0.f });
+			pathPoints.push_back({ 270.f, 170.f });
+			pathPoints.push_back({ 135.f, 170.f });
+			pathPoints.push_back({ 135.f, 265.f });
+			pathPoints.push_back({ 433.f, 265.f });
+			pathPoints.push_back({ 433.f, 530.f });
+			pathPoints.push_back({ 134.f, 530.f });
+			pathPoints.push_back({ 134.f, 667.f });
+			pathPoints.push_back({ 436.f, 667.f });
+			pathPoints.push_back({ 436.f, 809.f });
+			pathPoints.push_back({ 267.f, 809.f });
+			pathPoints.push_back({ 267.f, 960.f });
 		}
 	}
 
@@ -59,7 +74,7 @@ public:
 		}
 
 		for(const auto& enemy : enemies) {
-			enemy->move(deltaTime);
+			enemy->move(deltaTime, pathPoints);
 		}
 	}
 
@@ -160,5 +175,13 @@ public:
 			return waveManager->getCurrentWave();
 		}
 		return 0;
+	}
+
+	const std::vector<sf::Vector2f>& getPathPoints() const {
+		return pathPoints;
+	}
+
+	const PlayerStats& getPlayerStats() const {
+		return *playerStats;
 	}
 };

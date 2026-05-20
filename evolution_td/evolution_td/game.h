@@ -119,14 +119,13 @@ private:
 
 			if (auto mousePressed = event->getIf<sf::Event::MouseButtonPressed>()) {
 				if (mousePressed->button == sf::Mouse::Button::Left && gameState == GameState::PLAYING) {
-					float towerRadius = 32.f;
-					if (pendingTower && currentLevel->canPlaceTower(mousePressed->position, window.getSize(), static_cast<int>(towerRadius))) {
+					if (pendingTower && currentLevel->canPlaceTower(mousePressed->position, window.getSize(), static_cast<int>(pendingTower->getRadius()))) {
 						pendingTower->setColor(sf::Color(255, 255, 255, 255));
 						currentLevel->addTower(*pendingTower);
 						std::cout << "Placed tower " << pendingTower->getName() <<"at virtual position: (" << pendingTower->getVirtualPos().x << ", " << pendingTower->getVirtualPos().y << ")\n";
 						pendingTower.reset();
 					}
-					if (pendingTower && !currentLevel->canPlaceTower(mousePressed->position, window.getSize(), static_cast<int>(towerRadius))) {
+					if (pendingTower && !currentLevel->canPlaceTower(mousePressed->position, window.getSize(), static_cast<int>(pendingTower->getRadius()))) {
 						std::cout << "Unable to place tower at virtual position: (" << pendingTower->getVirtualPos().x << ", " << pendingTower->getVirtualPos().y << ")\n";
 					}
 				}
@@ -175,6 +174,7 @@ private:
 			float deltaTime = clock.restart().asSeconds();
 			if(currentLevel) {
 				currentLevel->update(deltaTime);
+				gui->updateStats(currentLevel->getPlayerStats());
 			}
 		}
 		else {

@@ -34,7 +34,7 @@ public:
 
 				if (enemy) {
 					if (id == 1) {
-						startPos = { 270.f, 2 * enemy->getRadius() };
+						startPos = { 270.f, -2 * enemy->getRadius() };
 					}
 					enemy->setVirtualPos(startPos);
 

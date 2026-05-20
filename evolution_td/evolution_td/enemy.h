@@ -10,8 +10,9 @@ private:
 	int damage;
 	float speed;
 	float radius;
-	sf::Sprite sprite;
+	std::size_t currentPathIndex = 0;
 
+	sf::Sprite sprite;
 	float texScale = 1.f;
 
 public:
@@ -37,8 +38,25 @@ public:
 		window.draw(sprite);
 	}
 
-	void move(float deltaTime) {
-		//todo: move along path
+	void move(float deltaTime, const std::vector<sf::Vector2f>& pathPoints) {
+		if (currentPathIndex >= pathPoints.size()) {
+			return;
+		}
+
+		sf::Vector2f target = pathPoints[currentPathIndex];
+		sf::Vector2f direction = target - virtualPos;
+		float distance = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+		float moveDistance = speed * deltaTime;
+
+		if (distance <= moveDistance) {
+			virtualPos = target;
+			++currentPathIndex;
+			std::cout << "Enemy " << name << " reached path point " << currentPathIndex << ", at " << virtualPos.x << ", " << virtualPos.y << "\n";
+		}
+		else {
+			sf::Vector2f normDirection = direction / distance;
+			virtualPos += normDirection * moveDistance;
+		}
 	}
 
 	float getRadius() const {
