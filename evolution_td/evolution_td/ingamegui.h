@@ -159,13 +159,31 @@ public:
 		gameOverText.setOutlineThickness(3.f * lastScale);	
 
 		sf::Vector2u windowSize = window.getSize();
-		sf::RectangleShape background(sf::Vector2f(windowSize.x, windowSize.y));
+		sf::RectangleShape background({ static_cast<float>(windowSize.x), static_cast<float>(windowSize.y) });
 		background.setFillColor(sf::Color(0, 0, 0, 150));
 		gameOverText.setOrigin({ gameOverText.getLocalBounds().size.x / 2.f, gameOverText.getLocalBounds().size.y / 2.f });
 		gameOverText.setPosition({ lastOffsetX + (windowSize.x / 2.f), windowSize.y / 2.4f });
 
 		window.draw(background);
 		window.draw(gameOverText);
+	}
+
+	void drawVictory(sf::RenderWindow& window) {
+		sf::Text victoryText(goldText.getFont());
+		victoryText.setString("Victory!");
+		victoryText.setCharacterSize(static_cast<unsigned int>(50.f * lastScale));
+		victoryText.setFillColor(sf::Color::Green);
+		victoryText.setOutlineColor(sf::Color::Black);
+		victoryText.setOutlineThickness(3.f * lastScale);
+
+		sf::Vector2u windowSize = window.getSize();
+		sf::RectangleShape background({ static_cast<float>(windowSize.x), static_cast<float>(windowSize.y) });
+		background.setFillColor(sf::Color(0, 0, 0, 150));
+		victoryText.setOrigin({ victoryText.getLocalBounds().size.x / 2.f, victoryText.getLocalBounds().size.y / 2.f });
+		victoryText.setPosition({ lastOffsetX + (windowSize.x / 2.f), windowSize.y / 2.4f });
+
+		window.draw(background);
+		window.draw(victoryText);
 	}
 
 	void updateLayout(float scale, float offsetX, const sf::Vector2u windowSize) {
@@ -227,7 +245,7 @@ public:
 	}
 
 	void updateStats(const PlayerStats& stats) {
-		goldText.setString(std::to_string(stats.getMoney()));
+		goldText.setString(std::to_string(stats.getGold()));
 		healthText.setString(std::to_string(stats.getHp()));
 	}
 };

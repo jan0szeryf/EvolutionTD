@@ -3,18 +3,18 @@
 class PlayerStats {
 private:
 	int hp;
-	int money;
+	int gold;
 	int score;
 
 public:
-	PlayerStats() : hp(100), money(100), score(0) {}
+	PlayerStats() : hp(100), gold(100), score(0) {}
 
 	int getHp() const {
 		return hp;
 	}
 
-	int getMoney() const {
-		return money;
+	int getGold() const {
+		return gold;
 	}
 
 	int getScore() const {
@@ -29,10 +29,16 @@ public:
 	}
 
 	void addMoney(int amount) {
-		money += amount;
+		gold += amount;
 	}
 
 	void addScore(int points) {
 		score += points;
+	}
+
+	void spendGold(int amount) {
+		if (gold >= amount) {
+			gold -= amount;
+		}
 	}
 };

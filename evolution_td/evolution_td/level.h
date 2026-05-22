@@ -68,9 +68,10 @@ public:
 		currentOffsetX = (static_cast<float>(windowSize.x) - 540.f * currentScale) / 2.f;
 	}
 
-	void update(float deltaTime) {
+	bool update(float deltaTime) {
+		bool levelCompleted = false;
 		if (waveManager) {
-			waveManager->update(deltaTime, enemies);
+			levelCompleted = waveManager->update(deltaTime, enemies);
 		}
 
 		for(const auto& enemy : enemies) {
@@ -85,6 +86,8 @@ public:
 			}
 			return false;
 		});
+
+		return levelCompleted;
 	}
 
 	void draw(sf::RenderWindow& window) {
@@ -163,7 +166,7 @@ public:
 
 	void nextWave() {
 		if (waveManager) {
-			waveManager->nextWave();
+			waveManager->nextWave(hasActiveEnemies());
 		}
 	}
 
@@ -190,7 +193,11 @@ public:
 		return pathPoints;
 	}
 
-	const PlayerStats& getPlayerStats() const {
+	PlayerStats& getPlayerStats() {
 		return *playerStats;
+	}
+
+	bool hasActiveEnemies() const {
+		return !enemies.empty() || (waveManager && waveManager->getCurrentWave() > 0);
 	}
 };

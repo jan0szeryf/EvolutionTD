@@ -33,11 +33,16 @@ public:
 			}
 			});
 		gui->updateLayout(1.f, 1.f, window.getSize());
-		gui->addTowerButton(assetManager.getTexture("thrower_stance"), assetManager.getFont("LilitaOne"), "", [this]() {
+		gui->addTowerButton(assetManager.getTexture("thrower_stance"), assetManager.getFont("LilitaOne"), "50", [this]() {
+			if (currentLevel->getPlayerStats().getGold() < 50) {
+				std::cout << "Not enough gold to buy thrower tower\n";
+				return;
+			}
 			sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 			sf::Vector2f virtualPos = currentLevel->mapMouseToVirtual(mousePos, window.getSize());
-			this->pendingTower = std::make_unique<Tower>("thrower", virtualPos, 10, 120.f, 1.f, 40.f, 100, assetManager.getTexture("thrower_stance"), assetManager.getTexture("thrower_projectile"));
+			this->pendingTower = std::make_unique<Tower>("thrower", virtualPos, 10, 120.f, 1.f, 40.f, 50, assetManager.getTexture("thrower_stance"), assetManager.getTexture("thrower_projectile"));
 			gui->toggleShop();
+			std::cout << "Started placing thrower tower\n";
 			});
 	}
 
@@ -81,7 +86,6 @@ private:
 				}
 				if (keyPressed->scancode == sf::Keyboard::Scancode::Enter && gameState == GameState::PLAYING) {
 					currentLevel->nextWave();
-					std::cout << "Started wave " << currentLevel->getCurrentWave() << "\n";
 				}
 			}
 
@@ -123,6 +127,7 @@ private:
 						pendingTower->setColor(sf::Color(255, 255, 255, 255));
 						currentLevel->addTower(*pendingTower);
 						std::cout << "Placed tower " << pendingTower->getName() <<"at virtual position: (" << pendingTower->getVirtualPos().x << ", " << pendingTower->getVirtualPos().y << ")\n";
+						currentLevel->getPlayerStats().spendGold(pendingTower->getCost());
 						pendingTower.reset();
 					}
 					if (pendingTower && !currentLevel->canPlaceTower(mousePressed->position, window.getSize(), static_cast<int>(pendingTower->getRadius()))) {
@@ -169,6 +174,10 @@ private:
 			currentLevel->draw(window);
 			gui->drawGameOver(window);
 		}
+		else if (gameState == GameState::VICTORY) {
+			currentLevel->draw(window);
+			gui->drawVictory(window);
+		}
 
 		window.display();
 	}
@@ -177,7 +186,13 @@ private:
 		if(gameState == GameState::PLAYING) {
 			float deltaTime = clock.restart().asSeconds();
 			if(currentLevel) {
-				currentLevel->update(deltaTime);
+				if(currentLevel->update(deltaTime)) {
+					gui->reset();
+					std::cout << "Victory! Final Score: " << currentLevel->getPlayerStats().getScore() << "\n";
+					gameState = GameState::VICTORY;
+					std::cout << "State changed to VICTORY\n";
+				}
+
 				if (currentLevel->getPlayerStats().getHp() <= 0) {
 					gui->reset();
 					std::cout << "Game Over! Final Score: " << currentLevel->getPlayerStats().getScore() << "\n";

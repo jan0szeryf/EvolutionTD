@@ -37,6 +37,10 @@ public:
 		return name;
 	}
 
+	int getCost() const {
+		return cost;
+	}
+
 	void draw(sf::RenderWindow& window, float scale, float offsetX) {
 		float x = virtualPos.x * scale + offsetX;
 		float y = virtualPos.y * scale;

@@ -4,5 +4,6 @@ enum class GameState {
 	LEVEL_SELECTION,
 	PLAYING,
 	PAUSED,
-	GAME_OVER
+	GAME_OVER,
+	VICTORY
 };

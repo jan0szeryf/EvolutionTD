@@ -8,6 +8,7 @@ private:
 	sf::Vector2f virtualPos;
 	int hp;
 	int damage;
+	int reward;
 	float speed;
 	float radius;
 	std::size_t currentPathIndex = 0;
@@ -16,7 +17,7 @@ private:
 	float texScale = 1.f;
 
 public:
-	Enemy(const std::string& _name, int _hp = 100, int _damage = 10, float _speed = 50.f, float _radius = 20.f, const sf::Texture& texture = sf::Texture()) : name(_name), hp(_hp), damage(_damage), speed(_speed), radius(_radius), sprite(texture) {
+	Enemy(const std::string& _name, int _hp = 100, int _damage = 10, int _reward = 25, float _speed = 50.f, float _radius = 20.f, const sf::Texture& texture = sf::Texture()) : name(_name), hp(_hp), damage(_damage), reward(_reward), speed(_speed), radius(_radius), sprite(texture) {
 		sf::Vector2f texSize = sf::Vector2f(texture.getSize());
 		sprite.setOrigin(texSize / 2.f);
 
@@ -24,7 +25,7 @@ public:
 		texScale = targetWidth / texSize.x;
 	}
 
-	Enemy(const sf::Vector2f& _virtualPos, const std::string& _name, int _hp = 100, int _damage = 10, float _speed = 50.f, float _radius = 20.f, const sf::Texture& texture = sf::Texture()) : Enemy(_name, _hp, _damage, _speed, _radius, texture) {
+	Enemy(const sf::Vector2f& _virtualPos, const std::string& _name, int _hp = 100, int _damage = 10, int _reward = 25, float _speed = 50.f, float _radius = 20.f, const sf::Texture& texture = sf::Texture()) : Enemy(_name, _hp, _damage, _reward, _speed, _radius, texture) {
 		virtualPos = _virtualPos;
 	}
 
