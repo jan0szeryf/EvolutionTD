@@ -76,6 +76,15 @@ public:
 		for(const auto& enemy : enemies) {
 			enemy->move(deltaTime, pathPoints);
 		}
+
+		std::erase_if(enemies, [this](const auto& enemy) {
+			if (enemy->hasReachedEnd(pathPoints.size())) {
+				playerStats->takeDamage(enemy->getDamage());
+				std::cout << "Enemy " << enemy->getName() << " reached the end and dealt " << enemy->getDamage() << " damage. Player HP: " << playerStats->getHp() << "\n";
+				return true;
+			}
+			return false;
+		});
 	}
 
 	void draw(sf::RenderWindow& window) {

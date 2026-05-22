@@ -72,7 +72,7 @@ private:
 					gui->updateLayout(currentLevel->getCurrentScale(), currentLevel->getCurrentOffsetX(), window.getSize());
 					std::cout << "State changed to PLAYING (forest1)\n";
 				}
-				if (keyPressed->scancode == sf::Keyboard::Scancode::Escape && gameState == GameState::PLAYING) {
+				if (keyPressed->scancode == sf::Keyboard::Scancode::Escape && (gameState == GameState::PLAYING || gameState == GameState::GAME_OVER)) {
 					currentLevel.reset();
 					gameState = GameState::MAIN_MENU;
 					gui->reset();
@@ -91,7 +91,7 @@ private:
 				if (gameState == GameState::MAIN_MENU) {
 					mainMenu->updateLayout(resized->size);
 				}
-				else if (gameState == GameState::PLAYING) {
+				else {
 					currentLevel->updateLayout(resized->size);
 					gui->updateLayout(currentLevel->getCurrentScale(), currentLevel->getCurrentOffsetX(), resized->size);
 				}
@@ -165,6 +165,10 @@ private:
 			overlay.setFillColor(sf::Color(0, 0, 0, 150));
 			window.draw(overlay);
 		}
+		else if (gameState == GameState::GAME_OVER) {
+			currentLevel->draw(window);
+			gui->drawGameOver(window);
+		}
 
 		window.display();
 	}
@@ -174,6 +178,12 @@ private:
 			float deltaTime = clock.restart().asSeconds();
 			if(currentLevel) {
 				currentLevel->update(deltaTime);
+				if (currentLevel->getPlayerStats().getHp() <= 0) {
+					gui->reset();
+					std::cout << "Game Over! Final Score: " << currentLevel->getPlayerStats().getScore() << "\n";
+					gameState = GameState::GAME_OVER;
+					std::cout << "State changed to GAME OVER\n";
+				}
 				gui->updateStats(currentLevel->getPlayerStats());
 			}
 		}

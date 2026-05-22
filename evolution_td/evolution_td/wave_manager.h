@@ -50,7 +50,7 @@ public:
 
 	std::unique_ptr<Enemy> createEnemy(const std::string& type) {
 		if (type == "dog") {
-			return std::make_unique<FastEnemy>("dog", 50, 5, 100.f, 20.f, assetManager.getTexture("dog_stance"));
+			return std::make_unique<FastEnemy>("dog", 100, 100, 200.f, 20.f, assetManager.getTexture("dog_stance"));
 		}
 		return nullptr;
 	}

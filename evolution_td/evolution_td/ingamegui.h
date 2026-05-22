@@ -150,6 +150,24 @@ public:
 		pauseButton->draw(window);
 	}
 
+	void drawGameOver(sf::RenderWindow& window) {
+		sf::Text gameOverText(goldText.getFont());
+		gameOverText.setString("Game Over");
+		gameOverText.setCharacterSize(static_cast<unsigned int>(50.f * lastScale));
+		gameOverText.setFillColor(sf::Color::Red);
+		gameOverText.setOutlineColor(sf::Color::Black);
+		gameOverText.setOutlineThickness(3.f * lastScale);	
+
+		sf::Vector2u windowSize = window.getSize();
+		sf::RectangleShape background(sf::Vector2f(windowSize.x, windowSize.y));
+		background.setFillColor(sf::Color(0, 0, 0, 150));
+		gameOverText.setOrigin({ gameOverText.getLocalBounds().size.x / 2.f, gameOverText.getLocalBounds().size.y / 2.f });
+		gameOverText.setPosition({ lastOffsetX + (windowSize.x / 2.f), windowSize.y / 2.4f });
+
+		window.draw(background);
+		window.draw(gameOverText);
+	}
+
 	void updateLayout(float scale, float offsetX, const sf::Vector2u windowSize) {
 		lastScale = scale;
 		lastOffsetX = offsetX;

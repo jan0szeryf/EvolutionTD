@@ -20,4 +20,19 @@ public:
 	int getScore() const {
 		return score;
 	}
+
+	void takeDamage(int damage) {
+		hp -= damage;
+		if (hp < 0) {
+			hp = 0;
+		}
+	}
+
+	void addMoney(int amount) {
+		money += amount;
+	}
+
+	void addScore(int points) {
+		score += points;
+	}
 };

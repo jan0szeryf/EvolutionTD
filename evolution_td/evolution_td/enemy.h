@@ -28,6 +28,8 @@ public:
 		virtualPos = _virtualPos;
 	}
 
+	~Enemy() = default;
+
 	void draw(sf::RenderWindow& window, float scale, float offsetX) {
 		float x = virtualPos.x * scale + offsetX;
 		float y = virtualPos.y * scale;
@@ -69,5 +71,17 @@ public:
 
 	void setVirtualPos(const sf::Vector2f& pos) {
 		virtualPos = pos;
+	}
+
+	sf::Vector2f getVirtualPos() const {
+		return virtualPos;
+	}
+
+	int getDamage() const {
+		return damage;
+	}
+
+	bool hasReachedEnd(std::size_t pathSize) const {
+		return currentPathIndex >= pathSize;
 	}
 };
