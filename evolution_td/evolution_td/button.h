@@ -59,6 +59,8 @@ public:
 	void setSize(sf::Vector2f size, unsigned int fontSize = 18) {
 		sf::FloatRect bounds = sprite.getLocalBounds();
 		sprite.setScale({ size.x / bounds.size.x, size.y / bounds.size.y });
+
+		label.setCharacterSize(fontSize);
 		updateLabelPosition();
 	}
 };

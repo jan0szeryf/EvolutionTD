@@ -21,6 +21,14 @@ public:
 
 		mainMenu = std::make_unique<MainMenu>(assetManager);
 		mainMenu->updateLayout(window.getSize());
+		mainMenu->addButton(assetManager.getTexture("play_button"), assetManager.getFont("LilitaOne"), "", [this]() {
+			changeLevel(1, "forest1", "forest1");
+			gameState = GameState::PLAYING;
+
+			gui->updateLayout(currentLevel->getCurrentScale(), currentLevel->getCurrentOffsetX(), window.getSize());
+			std::cout << "State changed to PLAYING (forest1)\n";
+		});
+		mainMenu->updateLayout(window.getSize());
 
 		gui = std::make_unique<InGameGUI>(assetManager, assetManager.getFont("LilitaOne"), [&]() {
 			if (this->gameState == GameState::PLAYING) {
@@ -117,6 +125,12 @@ private:
 
 			if (gameState == GameState::PLAYING || gameState == GameState::PAUSED) {
 				if (gui->handleEvent(*event, mousePos, gameState == GameState::PAUSED)) {
+					continue;
+				}
+			}
+
+			if (gameState == GameState::MAIN_MENU) {
+				if (mainMenu->handleEvent(*event, mousePos)) {
 					continue;
 				}
 			}
