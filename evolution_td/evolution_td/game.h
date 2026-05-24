@@ -1,4 +1,5 @@
 #pragma once
+#include <future>
 #include "level.h"
 #include "main_menu.h"
 #include "ingamegui.h"
@@ -12,46 +13,17 @@ private:
 	std::unique_ptr<InGameGUI> gui;
 	GameState gameState;
 	sf::Clock clock;
+	std::future<void> loadingFuture;
 
 	std::unique_ptr<Tower> pendingTower;
 
 public:
 	Game() : window(sf::VideoMode({ 540, 960 }), "EvolutionTD"), gameState(GameState::MAIN_MENU) {
-		assetManager.loadTextures("./assets");
-
-		mainMenu = std::make_unique<MainMenu>(assetManager);
-		mainMenu->updateLayout(window.getSize());
-		mainMenu->addButton(assetManager.getTexture("play_button"), assetManager.getFont("LilitaOne"), "", [this]() {
-			changeLevel(1, "forest1", "forest1");
-			gameState = GameState::PLAYING;
-
-			gui->updateLayout(currentLevel->getCurrentScale(), currentLevel->getCurrentOffsetX(), window.getSize());
-			std::cout << "State changed to PLAYING (forest1)\n";
+		std::cout << "Initializing game...\n";
+		gameState = GameState::LOADING;
+		loadingFuture = std::async(std::launch::async, [this]() {
+			assetManager.loadTextures("./assets");
 		});
-		mainMenu->updateLayout(window.getSize());
-
-		gui = std::make_unique<InGameGUI>(assetManager, assetManager.getFont("LilitaOne"), [&]() {
-			if (this->gameState == GameState::PLAYING) {
-				this->gameState = GameState::PAUSED;
-				std::cout << "State changed to PAUSED\n";
-			}
-			else if (this->gameState == GameState::PAUSED) {
-				this->gameState = GameState::PLAYING;
-				std::cout << "State changed to PLAYING\n";
-			}
-			});
-		gui->updateLayout(1.f, 1.f, window.getSize());
-		gui->addTowerButton(assetManager.getTexture("thrower_stance"), assetManager.getFont("LilitaOne"), "50", [this]() {
-			if (currentLevel->getPlayerStats().getGold() < 50) {
-				std::cout << "Not enough gold to buy thrower tower\n";
-				return;
-			}
-			sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-			sf::Vector2f virtualPos = currentLevel->mapMouseToVirtual(mousePos, window.getSize());
-			this->pendingTower = std::make_unique<Tower>("thrower", virtualPos, 10, 120.f, 1.f, 40.f, 50, assetManager.getTexture("thrower_stance"), assetManager.getTexture("thrower_projectile"));
-			gui->toggleShop();
-			std::cout << "Started placing thrower tower\n";
-			});
 	}
 
 	void changeLevel(int id, const std::string& name, const std::string& texture) {
@@ -103,7 +75,7 @@ private:
 				if (gameState == GameState::MAIN_MENU) {
 					mainMenu->updateLayout(resized->size);
 				}
-				else {
+				else if ((gameState == GameState::PLAYING || gameState == GameState::PAUSED) && currentLevel && gui) {
 					currentLevel->updateLayout(resized->size);
 					gui->updateLayout(currentLevel->getCurrentScale(), currentLevel->getCurrentOffsetX(), resized->size);
 				}
@@ -197,6 +169,49 @@ private:
 	}
 
 	void update() {
+		if (gameState == GameState::LOADING) {
+			if (loadingFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+				loadingFuture.get();
+
+				mainMenu = std::make_unique<MainMenu>(assetManager);
+				mainMenu->addButton(assetManager.getTexture("play_button"), assetManager.getFont("LilitaOne"), "", [this]() {
+					changeLevel(1, "forest1", "forest1");
+					gameState = GameState::PLAYING;
+
+					gui->updateLayout(currentLevel->getCurrentScale(), currentLevel->getCurrentOffsetX(), window.getSize());
+					std::cout << "State changed to PLAYING (forest1)\n";
+					});
+				mainMenu->updateLayout(window.getSize());
+
+				gui = std::make_unique<InGameGUI>(assetManager, assetManager.getFont("LilitaOne"), [&]() {
+					if (this->gameState == GameState::PLAYING) {
+						this->gameState = GameState::PAUSED;
+						std::cout << "State changed to PAUSED\n";
+					}
+					else if (this->gameState == GameState::PAUSED) {
+						this->gameState = GameState::PLAYING;
+						std::cout << "State changed to PLAYING\n";
+					}
+					});
+				gui->updateLayout(1.f, 1.f, window.getSize());
+				gui->addTowerButton(assetManager.getTexture("thrower_stance"), assetManager.getFont("LilitaOne"), "50", [this]() {
+					if (currentLevel->getPlayerStats().getGold() < 50) {
+						std::cout << "Not enough gold to buy thrower tower\n";
+						return;
+					}
+					sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+					sf::Vector2f virtualPos = currentLevel->mapMouseToVirtual(mousePos, window.getSize());
+					this->pendingTower = std::make_unique<Tower>("thrower", virtualPos, 10, 120.f, 1.f, 40.f, 50, assetManager.getTexture("thrower_stance"), assetManager.getTexture("thrower_projectile"));
+					gui->toggleShop();
+					std::cout << "Started placing thrower tower\n";
+					});
+
+				gameState = GameState::MAIN_MENU;
+				std::cout << "Assets loaded, state changed to MAIN MENU\n";
+			}
+			return;
+		}
+
 		if(gameState == GameState::PLAYING) {
 			float deltaTime = clock.restart().asSeconds();
 			if(currentLevel) {

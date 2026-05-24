@@ -13,6 +13,7 @@
 #include <string>
 #include <memory>
 #include <cmath>
+#include <algorithm>
 
 class Level {
 private:
@@ -151,13 +152,9 @@ public:
 			float getRadius() const { return r; }
 		} ghostHitbox = { { (float)centerX, (float)centerY }, (float)radius };
 
-		for (const auto& tower : towers) {
-			if (checkCollision(*tower, ghostHitbox)) {
-				return false;
-			}
-		}
-
-		return true;
+		return std::ranges::none_of(towers, [&](const auto& tower) {
+			return checkCollision(*tower, ghostHitbox);
+		});
 	}
 
 	void addTower(const Tower& tower) {
