@@ -17,7 +17,7 @@ private:
 	const AssetManager& assetManager;
 
 public:
-	WaveManager(int _id, const AssetManager& assets) : id(_id), assetManager(assets) {
+	WaveManager(int _id, const AssetManager& assets) : id(_id), assetManager(assets), startPos({ 0.f, 0.f }) {
 		if (id == 1) {
 			wavesQuantity = 5;
 		}

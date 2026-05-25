@@ -12,14 +12,18 @@ private:
 	sf::Vector2u lastWindowSize = {540, 960};
 	float lastScale = 1.f;
 	float lastOffsetX = 0.f;
+	int currentWave = 0;
 
 	std::unique_ptr<Button> shopButton;
 	std::unique_ptr<Button> pauseButton;
+	std::unique_ptr<Button> startWaveButton;
 	std::unique_ptr<sf::Sprite> healthSprite;
 	std::unique_ptr<sf::Sprite> goldSprite;
 	sf::Text healthText;
 	sf::Text goldText;
+	sf::Text waveText;
 
+	sf::RectangleShape waveBackground;
 	sf::RectangleShape shopPanel;
 	std::vector<std::unique_ptr<Button>> towerButtons;
 
@@ -38,6 +42,7 @@ private:
 
 		shopButton->setSize({ buttonSize, buttonSize });
 		pauseButton->setSize({ buttonSize, buttonSize });
+		startWaveButton->setSize({ buttonSize, buttonSize });
 		
 		float shopBtnX = lastOffsetX + (460.f * lastScale);
 		float shopBtnY = h - (80.f * lastScale);
@@ -50,6 +55,16 @@ private:
 		float pauseBtnX = lastOffsetX + (460.f * lastScale);
 		float pauseBtnY = 20.f * lastScale;
 		pauseButton->setPosition({ pauseBtnX, pauseBtnY });
+
+		float startWaveBtnX = lastOffsetX + (20.f * lastScale);
+		float startWaveBtnY = 20.f * lastScale;
+		startWaveButton->setPosition({ startWaveBtnX, startWaveBtnY });
+		waveBackground.setSize({ 160.f * lastScale, 30 * lastScale });
+		waveBackground.setPosition({ (startWaveBtnX + buttonSize / 2.f), (startWaveBtnY + buttonSize / 4.f) });
+		waveText.setCharacterSize(static_cast<unsigned int>(18.f * lastScale));
+		waveText.setOutlineThickness(2.f * lastScale);
+		waveText.setString("Wave " + std::to_string(currentWave));
+		waveText.setPosition({ (startWaveBtnX + buttonSize * 1.5f), (startWaveBtnY + buttonSize / 3.5f) });
 	}
 
 	void updateStatsLayout() {
@@ -67,7 +82,6 @@ private:
 			healthSprite->setScale({ iconSize / healthWidth, iconSize / healthHeight });
 		}
 		healthText.setCharacterSize(fontSize);
-		healthText.setOutlineColor(sf::Color::Black);
 		healthText.setOutlineThickness(2.f * lastScale);
 		healthText.setPosition({ healthX + iconSize + (10.f * lastScale), healthY + (5.f * lastScale) });
 
@@ -78,7 +92,6 @@ private:
 			goldSprite->setScale({ iconSize / goldWidth, iconSize / goldHeight });
 		}
 		goldText.setCharacterSize(fontSize);
-		goldText.setOutlineColor(sf::Color::Black);
 		goldText.setOutlineThickness(2.f * lastScale);
 		goldText.setPosition({ goldX + iconSize + (10.f * lastScale), goldY + (5.f * lastScale) });
 	}
@@ -99,23 +112,29 @@ private:
 	}
 
 public:
-	InGameGUI(const AssetManager& assets, const sf::Font& font, std::function<void()> onPauseCallback) : healthText(font), goldText(font) {
+	InGameGUI(const AssetManager& assets, const sf::Font& font, std::function<void()> onPauseCallback, std::function<void()> nextWaveCallback) : healthText(font), goldText(font), waveText(font) {
 		shopButton = std::make_unique<Button>(assets.getTexture("shop_icon"), sf::Vector2f(460.f, 880.f), font, "", [this]() {
 			this->toggleShop();
 		});
 		
 		pauseButton = std::make_unique<Button>(assets.getTexture("pause_icon"), sf::Vector2f(460.f, 20.f), font, "", onPauseCallback);
+		startWaveButton = std::make_unique<Button>(assets.getTexture("nextWave_icon"), sf::Vector2f(20.f, 20.f), font, "", nextWaveCallback);
 		healthSprite = std::make_unique<sf::Sprite>(assets.getTexture("health_icon"));
 		goldSprite = std::make_unique<sf::Sprite>(assets.getTexture("gold_icon"));
 
 		shopPanel.setFillColor(sf::Color(50, 50, 50, 200));
+		waveBackground.setFillColor(sf::Color(0, 0, 0, 150));
+		waveBackground.setOrigin({ 0, waveBackground.getLocalBounds().size.y / 2.f });
 
 		healthText.setFont(font);
-		healthText.setCharacterSize(18);
 		healthText.setFillColor(sf::Color::White);
+		goldText.setOutlineColor(sf::Color::Black);
 		goldText.setFont(font);
-		goldText.setCharacterSize(18);
 		goldText.setFillColor(sf::Color::White);
+		goldText.setOutlineColor(sf::Color::Black);
+		waveText.setFont(font);
+		waveText.setFillColor(sf::Color::White);
+		goldText.setOutlineColor(sf::Color::Black);
 	}
 
 	void toggleShop() {
@@ -148,6 +167,9 @@ public:
 
 		shopButton->draw(window);
 		pauseButton->draw(window);
+		window.draw(waveBackground);
+		window.draw(waveText);
+		startWaveButton->draw(window);
 	}
 
 	void drawGameOver(sf::RenderWindow& window) {
@@ -215,6 +237,16 @@ public:
 			}
 		}
 
+		if (startWaveButton->isClicked(mousePos)) {
+			if (event.is<sf::Event::MouseButtonPressed>()) {
+				if (isPaused) {
+					return false;
+				}
+				startWaveButton->execute();
+				return true;
+			}
+		}
+
 		if (isShopOpen) {
 			if(shopPanel.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos))) {
 				for (const auto& button : towerButtons) {
@@ -247,5 +279,10 @@ public:
 	void updateStats(const PlayerStats& stats) {
 		goldText.setString(std::to_string(stats.getGold()));
 		healthText.setString(std::to_string(stats.getHp()));
+	}
+
+	void setCurrentWave(int wave) {
+		currentWave = wave;
+		updateControlButtons();
 	}
 };

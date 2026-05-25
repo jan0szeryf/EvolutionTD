@@ -1,6 +1,10 @@
 #pragma once
 #include "asset_manager.h"
+#include "hashitbox.h"
+#include "projectile.h"
 #include <SFML/Graphics.hpp>
+#include <memory>
+#include <algorithm>
 
 class Tower {
 private:
@@ -15,6 +19,7 @@ private:
 	sf::Sprite bulletSprite;
 
 	float texScale = 1.f;
+	float shootTimer = 0.f;
 
 public:
 	Tower(const std::string& _name, sf::Vector2f _virtualPos, int _damage, float _range, float _fireRate, float _radius, int _cost, const sf::Texture& texture, const sf::Texture& bulletTexture) : name(_name), virtualPos(_virtualPos), damage(_damage), range(_range), fireRate(_fireRate), radius(_radius), cost(_cost), sprite(texture), bulletSprite(bulletTexture) {
@@ -27,6 +32,10 @@ public:
 
 	float getRadius() const {
 		return radius;
+	}
+
+	float getRange() const {
+		return range;
 	}
 	
 	sf::Vector2f getVirtualPos() const {
@@ -85,5 +94,21 @@ public:
 
 	void setColor(sf::Color color) {
 		sprite.setColor(color);
+	}
+
+	void update(float deltaTime, std::vector<std::unique_ptr<Enemy>>& enemies, std::vector<std::unique_ptr<Projectile>>& projectiles, const sf::Texture& projectileTexture) {
+		shootTimer += deltaTime;
+
+		if (shootTimer >= fireRate) {
+			auto it = std::ranges::find_if(enemies, [this](const auto& enemy) {
+				return checkInRange(*this, *enemy);
+			});
+
+			if (it != enemies.end()) {
+				projectiles.push_back(std::make_unique<Projectile>(virtualPos, (*it)->getVirtualPos(), projectileTexture, damage));
+
+				shootTimer = 0.f;
+			}
+		}
 	}
 };

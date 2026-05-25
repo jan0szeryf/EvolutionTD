@@ -31,6 +31,58 @@ private:
 	float currentScale = 1.0f;
 	float currentOffsetX = 0.f;
 
+	void updateTowers(float deltaTime, const AssetManager& assets) {
+		for (auto& tower : towers) {
+			tower->update(deltaTime, enemies, projectiles, assets.getTexture(tower->getName() + "_projectile"));
+		}
+	}
+
+	void updateProjectiles(float deltaTime) {
+		for (auto& projectile : projectiles) {
+			projectile->move(deltaTime);
+		}
+	}
+
+	void updateEnemies(float deltaTime) {
+		for (const auto& enemy : enemies) {
+			enemy->move(deltaTime, pathPoints);
+		}
+
+		std::erase_if(enemies, [this](const auto& enemy) {
+			if (enemy->hasReachedEnd(pathPoints.size())) {
+				playerStats->takeDamage(enemy->getDamage());
+				std::cout << "Enemy " << enemy->getName() << " reached the end and dealt " << enemy->getDamage() << " damage. Player HP: " << playerStats->getHp() << "\n";
+				return true;
+			}
+			return false;
+		});
+	}
+
+	void handleCollisions() {
+		std::erase_if(projectiles, [&](const auto& projectile) {
+			auto enemyIt = std::ranges::find_if(enemies, [&](const auto& enemy) {
+				return checkCollision(*projectile, *enemy);
+			});
+
+			if (enemyIt != enemies.end()) {
+				(*enemyIt)->takeDamage(projectile->getDamage());
+				return true;
+			}
+
+			sf::Vector2f distVec = projectile->getTargetPos() - projectile->getVirtualPos();
+			return (distVec.x * distVec.x + distVec.y * distVec.y) < 4.f;
+		});
+
+		std::erase_if(enemies, [this](const auto& enemy) {
+			bool defeated = enemy->getHp() <= 0;
+			if (defeated) {
+				playerStats->addMoney(enemy->getReward());
+				std::cout << "Enemy " << enemy->getName() << " was defeated and rewarded " << enemy->getReward() << " gold.\n";
+			}
+			return defeated;
+		});
+	}
+
 public:
 	Level(int _id, const std::string& _name, const std::string& graphic_name, const AssetManager& assets) : id(_id), name(_name) {
 		background = std::make_unique<Background>(assets.getTexture(graphic_name));
@@ -69,24 +121,16 @@ public:
 		currentOffsetX = (static_cast<float>(windowSize.x) - 540.f * currentScale) / 2.f;
 	}
 
-	bool update(float deltaTime) {
+	bool update(float deltaTime, const AssetManager& assets) {
 		bool levelCompleted = false;
 		if (waveManager) {
 			levelCompleted = waveManager->update(deltaTime, enemies);
 		}
 
-		for(const auto& enemy : enemies) {
-			enemy->move(deltaTime, pathPoints);
-		}
-
-		std::erase_if(enemies, [this](const auto& enemy) {
-			if (enemy->hasReachedEnd(pathPoints.size())) {
-				playerStats->takeDamage(enemy->getDamage());
-				std::cout << "Enemy " << enemy->getName() << " reached the end and dealt " << enemy->getDamage() << " damage. Player HP: " << playerStats->getHp() << "\n";
-				return true;
-			}
-			return false;
-		});
+		updateTowers(deltaTime, assets);
+		updateProjectiles(deltaTime);
+		updateEnemies(deltaTime);
+		handleCollisions();
 
 		return levelCompleted;
 	}
@@ -101,9 +145,16 @@ public:
 		for (auto& enemy : enemies) {
 			enemy->draw(window, currentScale, currentOffsetX);
 		}
+
+		for (auto& projectile : projectiles) {
+			projectile->draw(window, currentScale, currentOffsetX);
+		}
 	}
 
 	bool canPlaceTower(sf::Vector2i mousePos, sf::Vector2u windowSize) const {
+		if (!background_mask) {
+			return false;
+		}
 		float scale = static_cast<float>(windowSize.y) / 960.f;
 
 		float backgroundWidth = 540.f * scale;
@@ -121,6 +172,9 @@ public:
 	}
 
 	bool canPlaceTower(sf::Vector2i mousePos, sf::Vector2u windowSize, int radius) const {
+		if(!background_mask) {
+			return false;
+		}
 		float backgroundWidth = 540.f * currentScale;
 
 		int centerX = static_cast<int>((mousePos.x - currentOffsetX) / currentScale);
@@ -195,6 +249,6 @@ public:
 	}
 
 	bool hasActiveEnemies() const {
-		return !enemies.empty() || (waveManager && waveManager->getCurrentWave() > 0);
+		return !enemies.empty();
 	}
 };

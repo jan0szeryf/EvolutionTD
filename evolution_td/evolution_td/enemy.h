@@ -29,7 +29,7 @@ public:
 		virtualPos = _virtualPos;
 	}
 
-	~Enemy() = default;
+	virtual ~Enemy() = default;
 
 	void draw(sf::RenderWindow& window, float scale, float offsetX) {
 		float x = virtualPos.x * scale + offsetX;
@@ -84,5 +84,18 @@ public:
 
 	bool hasReachedEnd(std::size_t pathSize) const {
 		return currentPathIndex >= pathSize;
+	}
+
+	int getHp() const {
+		return hp;
+	}
+
+	int getReward() const {
+		return reward;
+	}
+	
+	void takeDamage(int damageAmount) {
+		hp -= damageAmount;
+		std::cout << "Enemy " << name << " took " << damageAmount << " damage, HP now: " << hp << "\n";
 	}
 };

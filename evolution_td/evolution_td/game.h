@@ -22,6 +22,7 @@ public:
 		std::cout << "Initializing game...\n";
 		gameState = GameState::LOADING;
 		loadingFuture = std::async(std::launch::async, [this]() {
+			sf::Context context;
 			assetManager.loadTextures("./assets");
 		});
 	}
@@ -57,7 +58,7 @@ private:
 					gui->updateLayout(currentLevel->getCurrentScale(), currentLevel->getCurrentOffsetX(), window.getSize());
 					std::cout << "State changed to PLAYING (forest1)\n";
 				}
-				if (keyPressed->scancode == sf::Keyboard::Scancode::Escape && (gameState == GameState::PLAYING || gameState == GameState::GAME_OVER)) {
+				if (keyPressed->scancode == sf::Keyboard::Scancode::Escape && (gameState == GameState::PLAYING || gameState == GameState::GAME_OVER || gameState == GameState::VICTORY)) {
 					currentLevel.reset();
 					gameState = GameState::MAIN_MENU;
 					gui->reset();
@@ -112,7 +113,7 @@ private:
 					if (pendingTower && currentLevel->canPlaceTower(mousePressed->position, window.getSize(), static_cast<int>(pendingTower->getRadius()))) {
 						pendingTower->setColor(sf::Color(255, 255, 255, 255));
 						currentLevel->addTower(*pendingTower);
-						std::cout << "Placed tower " << pendingTower->getName() <<"at virtual position: (" << pendingTower->getVirtualPos().x << ", " << pendingTower->getVirtualPos().y << ")\n";
+						std::cout << "Placed tower " << pendingTower->getName() <<" at virtual position: (" << pendingTower->getVirtualPos().x << ", " << pendingTower->getVirtualPos().y << ")\n";
 						currentLevel->getPlayerStats().spendGold(pendingTower->getCost());
 						pendingTower.reset();
 					}
@@ -192,6 +193,9 @@ private:
 						this->gameState = GameState::PLAYING;
 						std::cout << "State changed to PLAYING\n";
 					}
+					}, [this]() {
+						this->currentLevel->nextWave();
+						this->gui->setCurrentWave(this->currentLevel->getCurrentWave());
 					});
 				gui->updateLayout(1.f, 1.f, window.getSize());
 				gui->addTowerButton(assetManager.getTexture("thrower_stance"), assetManager.getFont("LilitaOne"), "50", [this]() {
@@ -214,8 +218,13 @@ private:
 
 		if(gameState == GameState::PLAYING) {
 			float deltaTime = clock.restart().asSeconds();
+			if (deltaTime > 0.1f) {
+				deltaTime = 0.1f;
+				std::cout << "Warning: Large delta time detected (" << deltaTime << "s), capping to 0.1s\n";
+			}
+
 			if(currentLevel) {
-				if(currentLevel->update(deltaTime)) {
+				if(currentLevel->update(deltaTime, assetManager)) {
 					gui->reset();
 					std::cout << "Victory! Final Score: " << currentLevel->getPlayerStats().getScore() << "\n";
 					gameState = GameState::VICTORY;
